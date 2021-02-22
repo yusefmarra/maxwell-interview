@@ -10,6 +10,15 @@ const PRICES = {
   apple: { price: 0.89, discountQuantity: null, discountPrice: null, discount: 0 },
 }
 
+const countItems = (groceryString) => {
+  const items = groceryString.split(',').map(item => item.trim());
+
+  return Object.entries(items.reduce((acc, item) => {
+    acc[item] ? acc[item]++ : acc[item] = 1;
+    return acc;
+  }, {})).map(([item, count]) => ({ item, count }))
+};
+
 const calculateDiscount = (item, count) => {
   const { discount, discountQuantity } = PRICES[item];
   if (discountQuantity) {
@@ -19,7 +28,7 @@ const calculateDiscount = (item, count) => {
 }
 
 const calculateCost = (countedItems) => {
-  return countedItems.map(([item, count]) => {
+  return countedItems.map(({ item, count }) => {
     const discount = calculateDiscount(item, count);
     return { item, count, cost: (PRICES[item].price * count), discount };
   })
@@ -33,23 +42,23 @@ const applyDiscount = (items) => {
 }
 
 const formatText = (items) => {
-  console.log(items)
+  let total = 0;
+  let totalSaved = 0;
   console.log(`Item     Quantity      Price`)
   console.log(`--------------------------------------`);
   for (item of items) {
-    console.log(`${item.item}    ${item.count}         ${item.cost}`);
+    let { item: name, count, cost, discount } = item;
+    total += cost;
+    totalSaved += discount;
+    console.log(`${name.padEnd(9)}${String(count).padEnd(14)}$${cost}`);
   }
+  console.log(`Total price : $${total}`)
+  console.log(`You saved $${totalSaved} today.`)
 }
 
 readline.question('Please enter all the items purchased separated by a comma: ', list => {
-  const items = list.split(',').map(item => item.trim());
-
-  const countedItems = items.reduce((acc, item) => {
-    acc[item] ? acc[item]++ : acc[item] = 1;
-    return acc;
-  }, {})
-
-  const what = applyDiscount(calculateCost(Object.entries(countedItems)));
+  const countedItems = countItems(list);
+  const what = applyDiscount(calculateCost(countedItems));
   console.log(what);
 
   formatText(what);
