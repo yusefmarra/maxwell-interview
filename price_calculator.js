@@ -19,24 +19,40 @@ const calculateDiscount = (item, count) => {
 }
 
 const calculateCost = (countedItems) => {
-  return Object.entries(countedItems).map(([item, count]) => {
+  return countedItems.map(([item, count]) => {
     const discount = calculateDiscount(item, count);
-    return { item, count, cost: (PRICES[item].price * count) - discount, saved: discount };
+    return { item, count, cost: (PRICES[item].price * count), discount };
   })
+}
+
+const applyDiscount = (items) => {
+  return items.map(item => {
+    item.cost = item.cost - item.discount;
+    return item;
+  });
+}
+
+const formatText = (items) => {
+  console.log(items)
+  console.log(`Item     Quantity      Price`)
+  console.log(`--------------------------------------`);
+  for (item of items) {
+    console.log(`${item.item}    ${item.count}         ${item.cost}`);
+  }
 }
 
 readline.question('Please enter all the items purchased separated by a comma: ', list => {
   const items = list.split(',').map(item => item.trim());
-  // console.log(items);
 
   const countedItems = items.reduce((acc, item) => {
     acc[item] ? acc[item]++ : acc[item] = 1;
     return acc;
   }, {})
-  // console.log(countedItems);
 
-  const what = calculateCost(countedItems);
+  const what = applyDiscount(calculateCost(Object.entries(countedItems)));
   console.log(what);
+
+  formatText(what);
 
   readline.close()
 });
