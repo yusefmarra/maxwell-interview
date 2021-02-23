@@ -5,7 +5,7 @@ const readline = require('readline').createInterface({
 
 const PRICES = {
   milk: { price: 3.97, discountQuantity: 2, discountPrice: 5, discount: 2.94 },
-  bread: { price: 2.17, discountQuantity: 2, discountPrice: 6, discount: 0.51 },
+  bread: { price: 2.17, discountQuantity: 3, discountPrice: 6, discount: 0.51 },
   banana: { price: 0.99, discountQuantity: null, discountPrice: null, discount: 0 },
   apple: { price: 0.89, discountQuantity: null, discountPrice: null, discount: 0 },
 }
@@ -19,18 +19,19 @@ const countItems = (groceryString) => {
   }, {})).map(([item, count]) => ({ item, count }))
 };
 
-const calculateDiscount = (item, count) => {
-  const { discount, discountQuantity } = PRICES[item];
-  if (discountQuantity) {
-    return Math.floor(count/discountQuantity) * discount
-  }
-  return 0;
+const calculateDiscount = (items) => {
+  return items.map(({ item, count, ...rest }) => {
+    const { discount, discountQuantity } = PRICES[item];
+    if (discountQuantity) {
+      return { item, count, ...rest, discount: Math.floor(count/discountQuantity) * discount }
+    }
+    return { item, count, ...rest, discount: 0 }
+  })
 }
 
-const calculateCost = (countedItems) => {
-  return countedItems.map(({ item, count }) => {
-    const discount = calculateDiscount(item, count);
-    return { item, count, cost: (PRICES[item].price * count), discount };
+const calculateCost = (items) => {
+  return items.map(({ item, count }) => {
+    return { item, count, cost: (PRICES[item].price * count) };
   })
 }
 
@@ -40,6 +41,9 @@ const applyDiscount = (items) => {
     return item;
   });
 }
+
+const compose = (...fns) => x => fns.reduceRight((y, f) => f(y), x);
+const buildReceipt = compose(applyDiscount, calculateDiscount, calculateCost, countItems);
 
 const formatText = (items) => {
   let total = 0;
@@ -57,11 +61,8 @@ const formatText = (items) => {
 }
 
 readline.question('Please enter all the items purchased separated by a comma: ', list => {
-  const countedItems = countItems(list);
-  const what = applyDiscount(calculateCost(countedItems));
-  console.log(what);
-
-  formatText(what);
+  const receipt = buildReceipt(list);
+  formatText(receipt);
 
   readline.close()
 });
