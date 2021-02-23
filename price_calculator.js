@@ -30,39 +30,49 @@ const calculateDiscount = (items) => {
 }
 
 const calculateCost = (items) => {
-  return items.map(({ item, count }) => {
-    return { item, count, cost: (PRICES[item].price * count) };
+  return items.map(({ item, count, ...rest }) => {
+    return { item, count, ...rest, cost: (PRICES[item].price * count) };
   })
 }
 
 const applyDiscount = (items) => {
   return items.map(item => {
-    item.cost = item.cost - item.discount;
+    if (Number(item.cost) && Number(item.discount)) {
+      item.cost = item.cost - item.discount;
+    }
     return item;
   });
 }
 
-const compose = (...fns) => x => fns.reduceRight((y, f) => f(y), x);
-const buildReceipt = compose(applyDiscount, calculateDiscount, calculateCost, countItems);
-
-const formatText = (items) => {
+const calculateTotals = (items) => {
   let total = 0;
   let totalSaved = 0;
-  console.log(`Item     Quantity      Price`)
-  console.log(`--------------------------------------`);
   for (item of items) {
-    let { item: name, count, cost, discount } = item;
+    let { cost, discount } = item;
     total += cost;
     totalSaved += discount;
+  }
+  return { items, total, totalSaved };
+}
+
+
+const formatReceipt = ({ items, total, totalSaved }) => {
+  console.log(`\nItem     Quantity      Price`)
+  console.log(`--------------------------------------`);
+  for (item of items) {
+    let { item: name, count, cost } = item;
     console.log(`${name.padEnd(9)}${String(count).padEnd(14)}$${cost}`);
   }
-  console.log(`Total price : $${total}`)
+  console.log(`\nTotal price : $${total}`)
   console.log(`You saved $${totalSaved} today.`)
 }
 
-readline.question('Please enter all the items purchased separated by a comma: ', list => {
+const compose = (...fns) => x => fns.reduceRight((y, f) => f(y), x);
+const buildReceipt = compose(calculateTotals, applyDiscount, calculateDiscount, calculateCost, countItems);
+
+readline.question('Please enter all the items purchased separated by a comma:\n', list => {
   const receipt = buildReceipt(list);
-  formatText(receipt);
+  formatReceipt(receipt);
 
   readline.close()
 });
