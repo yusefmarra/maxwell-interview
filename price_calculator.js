@@ -21,8 +21,8 @@ const countItems = (groceryString) => {
 
 const calculateDiscount = (items) => {
   return items.map(({ item, count, ...rest }) => {
-    const { discount, discountQuantity } = PRICES[item];
-    if (discountQuantity) {
+    if (PRICES[item] && PRICES[item].discountQuantity) {
+      const { discount, discountQuantity } = PRICES[item];
       return { item, count, ...rest, discount: Math.floor(count/discountQuantity) * discount }
     }
     return { item, count, ...rest, discount: 0 }
@@ -31,7 +31,10 @@ const calculateDiscount = (items) => {
 
 const calculateCost = (items) => {
   return items.map(({ item, count, ...rest }) => {
-    return { item, count, ...rest, cost: (PRICES[item].price * count) };
+    if (PRICES[item]) {
+      return { item, count, ...rest, cost: (PRICES[item].price * count) };
+    }
+    return { item, count, ...rest, cost: 0 };
   })
 }
 
